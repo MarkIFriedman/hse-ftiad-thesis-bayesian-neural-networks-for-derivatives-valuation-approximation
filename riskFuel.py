@@ -1,7 +1,15 @@
-import numpy
 import torch
+import numpy as np
 import torch.nn.functional as F
 
+if torch.cuda.is_available():
+    device = "cuda:0"
+    print(f"GPU detected. Running on {device}")
+else:
+    device = "cpu"
+    print("No GPU detected. Running on CPU")
+
+to_tensor = lambda x: torch.from_numpy(x).float().to(device)
 
 class RiskFuelNet(torch.nn.Module):
     def __init__(self, n_feature, n_hidden, n_layers, n_output):
@@ -20,24 +28,20 @@ class RiskFuelNet(torch.nn.Module):
         return x
 
 
-def fit_net(net: RiskFuelNet, n_epochs: int, x_train: numpy.ndarray, y_train: numpy.ndarray,
-            x_test: numpy.ndarray, y_test: numpy.ndarray, device: str = 'cpu'):
-    # n = y.size()[0]
-
-    n_train = x_train.shape[0]
-    n_test = x_test.shape[0]
-
+def fit_net(net: RiskFuelNet, n_epochs: int, x_train: np.ndarray, y_train: np.ndarray,
+            x_test: np.ndarray, y_test: np.ndarray, device: str = 'cpu'):
     net.to(device)
-    x_ = torch.from_numpy(x_train).to(device)
-    y_ = torch.from_numpy(y_train).to(device)
 
-    x_test_ = torch.from_numpy(x_test).to(device)
-    y_test_ = torch.from_numpy(y_test).to(device)
+    x_ = to_tensor(x_train)
+    y_ = to_tensor(y_train)
+
+    x_test_ = to_tensor(x_test)
+    y_test_ = to_tensor(y_test)
 
     optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
     loss_func = torch.nn.MSELoss()
 
-    cur_loss = 10 ** 5
+    l = 10 ** 5
     best_l = 1e-3
     checkpoint = {}
     l_train = []
@@ -55,10 +59,10 @@ def fit_net(net: RiskFuelNet, n_epochs: int, x_train: numpy.ndarray, y_train: nu
         loss.backward()
         optimizer.step()
 
-        cur_loss = loss_test.data.cpu().numpy()
-        l_test.append(cur_loss)
-        if cur_loss.item() < best_l:
-            best_l = cur_loss.item()
+        l = loss_test.data.cpu().numpy()
+        l_test.append(l)
+        if l.item() < best_l:
+            best_l = l.item()
             checkpoint = {
                 "n_hidden": net.n_hidden,
                 "n_layers": net.n_layers,
