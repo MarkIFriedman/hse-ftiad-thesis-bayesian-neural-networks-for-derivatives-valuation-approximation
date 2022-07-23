@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 if torch.cuda.is_available():
     device = "cuda:0"
@@ -29,7 +30,7 @@ class RiskFuelNet(torch.nn.Module):
 
 
 def fit_net(net: RiskFuelNet, n_epochs: int, x_train: np.ndarray, y_train: np.ndarray,
-            x_test: np.ndarray, y_test: np.ndarray, device: str = 'cpu'):
+            x_test: np.ndarray, y_test: np.ndarray, device=device, log_folder: str = 'riskFuel'):
     net.to(device)
 
     x_ = to_tensor(x_train)
@@ -38,11 +39,13 @@ def fit_net(net: RiskFuelNet, n_epochs: int, x_train: np.ndarray, y_train: np.nd
     x_test_ = to_tensor(x_test)
     y_test_ = to_tensor(y_test)
 
+    writer = SummaryWriter(log_dir='./logs/' + log_folder)
+
     optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
     loss_func = torch.nn.MSELoss()
 
     l = 10 ** 5
-    best_l = 1e-3
+    best_l = l
     checkpoint = {}
     l_train = []
     l_test = []
@@ -54,7 +57,8 @@ def fit_net(net: RiskFuelNet, n_epochs: int, x_train: np.ndarray, y_train: np.nd
 
         prediction_test = net(x_test_)
         loss_test = loss_func(prediction_test, y_test_)
-
+        writer.add_scalar('train_loss', loss, global_step=e)
+        writer.add_scalar('test_loss', loss_test, global_step=e)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
