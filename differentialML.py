@@ -484,7 +484,7 @@ def test(generator,
     regressor = Neural_Approximator(xTrain, yTrain, dydxTrain)
     print("done")
 
-    regressor.prepare(size, False, weight_seed=weightSeed)
+    regressor.prepare(size, True, weight_seed=weightSeed)
     regressor.train("differential training")
     predvalues, preddiff = regressor.predict_values_and_derivs(xTest)
 
