@@ -2,7 +2,7 @@
 
 ## Instructions
 
-Works for Python 3.9
+Works for Python 3.x
 * install [requirements.txt](https://github.com/MarkIFriedman/hse-ftiad-thesis-bayesian-neural-networks-for-derivatives-valuation-approximation/blob/main/requirements.txt)
 * clone the repo
 
