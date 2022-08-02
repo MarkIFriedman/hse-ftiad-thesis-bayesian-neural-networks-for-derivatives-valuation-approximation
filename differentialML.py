@@ -75,7 +75,7 @@ def vanilla_net(
     # result = output layer
     ys = zs[hidden_layers + 1]
 
-    # return input layer, (parameters = weight matrices and bias vectors), 
+    # return input layer, (parameters = weight matrices and bias vectors),
     # [all layers] and output layer
     return xs, (ws, bs), zs, ys
 
@@ -471,7 +471,7 @@ def test(generator,
          simulSeed=None,
          testSeed=None,
          weightSeed=None,
-         deltidx=0):
+         differential=False):
     # simulation
     print("simulating training, valid and test sets")
     xTrain, yTrain, dydxTrain = generator.dataset(size, seed=simulSeed)
@@ -484,7 +484,7 @@ def test(generator,
     regressor = Neural_Approximator(xTrain, yTrain, dydxTrain)
     print("done")
 
-    regressor.prepare(size, False, weight_seed=weightSeed)
+    regressor.prepare(size, differential, weight_seed=weightSeed)
     regressor.train("differential training")
     predvalues, preddiff = regressor.predict_values_and_derivs(xTest)
 
