@@ -258,7 +258,7 @@ def train(description,
           approximator,
           # training params
           reinit=True,
-          epochs=100,
+          epochs=20,
           # one-cycle learning rate schedule
           learning_rate_schedule=[(0.0, 1.0e-8),
                                   (0.2, 0.1),
@@ -327,6 +327,7 @@ def train(description,
         y_pred, dydx_pred = approximator.predict_values_and_derivs(approximator.x)
         loss_vals = mse(approximator.y, y_pred)
         loss_derivs = mse(approximator.dy_dx, dydx_pred)
+        print(f'ep {epoch} val: {loss_vals}, deriv: {loss_derivs}')
 
         writer.add_scalar('train_loss_values', loss_vals, global_step=epoch)
         writer.add_scalar('train_loss_derivs', loss_derivs, global_step=epoch)
@@ -436,7 +437,7 @@ class Neural_Approximator():
               description="training",
               # training params
               reinit=True,
-              epochs=100,
+              epochs=20,
               # one-cycle learning rate schedule
               learning_rate_schedule=[
                   (0.0, 1.0e-8),
