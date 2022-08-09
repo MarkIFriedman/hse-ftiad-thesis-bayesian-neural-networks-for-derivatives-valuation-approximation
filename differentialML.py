@@ -1,9 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error as mse
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 import warnings
 
 import tensorflow as tf2
+from tensorflow import keras
+
 
 print("TF version =", tf2.__version__)
 
@@ -25,6 +30,9 @@ print("GPU support = ", tf.test.is_gpu_available())
 # representation of real numbers in TF, change here for 32/64 bits
 real_type = tf.float32
 
+# define the Keras TensorBoard callback.
+logdir = "./logs/diffML" #/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
 def vanilla_net(
         input_dim,  # dimension of inputs, e.g. 10
@@ -261,7 +269,7 @@ def train(description,
           min_batch_size=256,
           # callback function and when to call it
           callback=None,  # arbitrary callable
-          callback_epochs=[]):  # call after what epochs, e.g. [5, 20]
+          callback_epochs=False):  # call after what epochs, e.g. [5, 20]
 
     # batching
     batch_size = max(min_batch_size, approximator.m // batches_per_epoch)
@@ -274,9 +282,12 @@ def train(description,
         approximator.session.run(approximator.initializer)
 
     # callback on epoch 0, if requested
-    if callback and 0 in callback_epochs:
+    if callback:
         callback(approximator, 0)
-
+    loss = approximator.loss
+    # loss = tf2.Print(loss, [loss])
+    # tf.print(loss)
+    writer = SummaryWriter(log_dir=logdir)
     # loop on epochs, with progress bar (tqdm)
     for epoch in tqdm(range(epochs), desc=description):
 
@@ -313,12 +324,19 @@ def train(description,
                 batch_size,
                 approximator.session)
 
+        y_pred, dydx_pred = approximator.predict_values_and_derivs(approximator.x)
+        loss_vals = mse(approximator.y, y_pred)
+        loss_derivs = mse(approximator.dy_dx, dydx_pred)
+
+        writer.add_scalar('train_loss_values', loss_vals, global_step=epoch)
+        writer.add_scalar('train_loss_derivs', loss_derivs, global_step=epoch)
+
         # callback, if requested
-        if callback and epoch in callback_epochs:
+        if callback:
             callback(approximator, epoch)
 
     # final callback, if requested
-    if callback and epochs in callback_epochs:
+    if callback:
         callback(approximator, epochs)
 
 
@@ -431,7 +449,7 @@ class Neural_Approximator():
               # callback and when to call it
               # we don't use callbacks, but this is very useful, e.g. for debugging
               callback=None,  # arbitrary callable
-              callback_epochs=[]):  # call after what epochs, e.g. [5, 20]
+              callback_epochs=False):  # call after what epochs, e.g. [5, 20]
 
         train(description,
               self,
