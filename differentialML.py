@@ -289,7 +289,11 @@ def train(xTest, yTest, dydxTest,
     loss = approximator.loss
     # loss = tf2.Print(loss, [loss])
     # tf.print(loss)
-    writer = SummaryWriter(log_dir=logdir)
+    if approximator.differential:
+        logdir_ = logdir + 'diffON'
+    else:
+        logdir_ = logdir + 'diffOFF'
+    writer = SummaryWriter(log_dir=logdir_)
     # loop on epochs, with progress bar (tqdm)
     for epoch in tqdm(range(epochs), desc=description):
 
