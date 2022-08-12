@@ -253,7 +253,8 @@ def normalize_data(x_raw, y_raw, dydx_raw=None, crop=None):
     return x_mean, x_std, x, y_mean, y_std, y, dy_dx, lambda_j
 
 
-def train(description,
+def train(xTest, yTest, dydxTest,
+          description,
           # neural approximator
           approximator,
           # training params
@@ -269,7 +270,8 @@ def train(description,
           min_batch_size=256,
           # callback function and when to call it
           callback=None,  # arbitrary callable
-          callback_epochs=False):  # call after what epochs, e.g. [5, 20]
+          callback_epochs=False, # call after what epochs, e.g. [5, 20]
+        ):
 
     # batching
     batch_size = max(min_batch_size, approximator.m // batches_per_epoch)
@@ -327,10 +329,18 @@ def train(description,
         y_pred, dydx_pred = approximator.predict_values_and_derivs(approximator.x)
         loss_vals = mse(approximator.y, y_pred)
         loss_derivs = mse(approximator.dy_dx, dydx_pred)
-        print(f'ep {epoch} val: {loss_vals}, deriv: {loss_derivs}')
+        # print(f'ep {epoch} val: {loss_vals}, deriv: {loss_derivs}')
 
         writer.add_scalar('train_loss_values', loss_vals, global_step=epoch)
         writer.add_scalar('train_loss_derivs', loss_derivs, global_step=epoch)
+
+        y_pred, dydx_pred = approximator.predict_values_and_derivs(xTest)
+        loss_vals = mse(yTest, y_pred)
+        loss_derivs = mse(dydxTest, dydx_pred)
+        # print(f'ep {epoch} val: {loss_vals}, deriv: {loss_derivs}')
+
+        writer.add_scalar('test_loss_values', loss_vals, global_step=epoch)
+        writer.add_scalar('test_loss_derivs', loss_derivs, global_step=epoch)
 
         # callback, if requested
         if callback:
@@ -434,6 +444,7 @@ class Neural_Approximator():
         self.build_graph(differential, lam, hidden_units, hidden_layers, weight_seed)
 
     def train(self,
+              xTest, yTest, dydxTest,
               description="training",
               # training params
               reinit=True,
@@ -452,7 +463,8 @@ class Neural_Approximator():
               callback=None,  # arbitrary callable
               callback_epochs=False):  # call after what epochs, e.g. [5, 20]
 
-        train(description,
+        train(xTest, yTest, dydxTest,
+              description,
               self,
               reinit,
               epochs,
@@ -504,7 +516,7 @@ def test(generator,
     print("done")
 
     regressor.prepare(size, differential, weight_seed=weightSeed)
-    regressor.train("differential training")
+    regressor.train(xTest, yTest, dydxTest, "differential training")
     predvalues, preddiff = regressor.predict_values_and_derivs(xTest)
 
     return xAxis, yTest, dydxTest, predvalues, preddiff
