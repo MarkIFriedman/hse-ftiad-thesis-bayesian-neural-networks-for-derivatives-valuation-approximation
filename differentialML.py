@@ -259,7 +259,7 @@ def train(xTest, yTest, dydxTest,
           approximator,
           # training params
           reinit=True,
-          epochs=20,
+          epochs=100,
           # one-cycle learning rate schedule
           learning_rate_schedule=[(0.0, 1.0e-8),
                                   (0.2, 0.1),
@@ -452,7 +452,7 @@ class Neural_Approximator():
               description="training",
               # training params
               reinit=True,
-              epochs=20,
+              epochs=100,
               # one-cycle learning rate schedule
               learning_rate_schedule=[
                   (0.0, 1.0e-8),
@@ -506,7 +506,8 @@ def test(generator,
          simulSeed=None,
          testSeed=None,
          weightSeed=None,
-         differential=False):
+         differential=False,
+         lam=1):
     # simulation
     print("simulating training, valid and test sets")
     xTrain, yTrain, dydxTrain = generator.dataset(size, seed=simulSeed)
@@ -519,7 +520,7 @@ def test(generator,
     regressor = Neural_Approximator(xTrain, yTrain, dydxTrain)
     print("done")
 
-    regressor.prepare(size, differential, weight_seed=weightSeed)
+    regressor.prepare(size, differential, weight_seed=weightSeed, lam=1)
     regressor.train(xTest, yTest, dydxTest, "differential training")
     predvalues, preddiff = regressor.predict_values_and_derivs(xTest)
 
