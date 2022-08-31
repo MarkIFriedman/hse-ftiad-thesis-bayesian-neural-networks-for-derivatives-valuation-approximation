@@ -271,8 +271,8 @@ def train(xTest, yTest, dydxTest,
           # callback function and when to call it
           callback=None,  # arbitrary callable
           callback_epochs=False, # call after what epochs, e.g. [5, 20]
+          lam=1
         ):
-
     # batching
     batch_size = max(min_batch_size, approximator.m // batches_per_epoch)
 
@@ -290,9 +290,9 @@ def train(xTest, yTest, dydxTest,
     # loss = tf2.Print(loss, [loss])
     # tf.print(loss)
     if approximator.differential:
-        logdir_ = logdir + 'diffON'
+        logdir_ = logdir + f'_lambda={lam}'
     else:
-        logdir_ = logdir + 'diffOFF'
+        logdir_ = logdir + '_lambda=0'
     writer = SummaryWriter(log_dir=logdir_)
     # loop on epochs, with progress bar (tqdm)
     for epoch in tqdm(range(epochs), desc=description):
@@ -465,8 +465,8 @@ class Neural_Approximator():
               # callback and when to call it
               # we don't use callbacks, but this is very useful, e.g. for debugging
               callback=None,  # arbitrary callable
-              callback_epochs=False):  # call after what epochs, e.g. [5, 20]
-
+              callback_epochs=False,
+              lam=1):  # call after what epochs, e.g. [5, 20]
         train(xTest, yTest, dydxTest,
               description,
               self,
@@ -476,7 +476,8 @@ class Neural_Approximator():
               batches_per_epoch,
               min_batch_size,
               callback,
-              callback_epochs)
+              callback_epochs,
+              lam=lam)
 
     def predict_values(self, x):
         # scale
@@ -520,8 +521,8 @@ def test(generator,
     regressor = Neural_Approximator(xTrain, yTrain, dydxTrain)
     print("done")
 
-    regressor.prepare(size, differential, weight_seed=weightSeed, lam=1)
-    regressor.train(xTest, yTest, dydxTest, "differential training")
+    regressor.prepare(size, differential, weight_seed=weightSeed, lam=lam)
+    regressor.train(xTest, yTest, dydxTest, "differential training", lam=lam)
     predvalues, preddiff = regressor.predict_values_and_derivs(xTest)
 
     return xAxis, yTest, dydxTest, predvalues, preddiff
